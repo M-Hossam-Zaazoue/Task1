@@ -1,0 +1,43 @@
+- name: Task1
+  hosts: servers
+  remote_user: root
+  tasks:
+
+    - name: Install Apache, MariaDB, PHP
+      dnf: 
+        name: 
+          - httpd
+          - mariadb-server
+          - php
+          - php-mysqlnd
+        state: latest
+    
+    - name: Enable and start Apache, MariaDB
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      with_items: 
+        - httpd
+        - mariadb
+
+    - name: Allow connections to host
+      firewalld:
+        service: "{{ item }}"
+        permanent: yes
+        immediate: yes
+        state: enabled
+      with_items: 
+        - http
+        - https
+
+    - name: Copy PHP script to host
+      copy:
+        src: /root/Task1/info.php
+        dest: /var/www/html/info.php
+
+    - name: Test host can display content of PHP script
+      uri:
+        url: http://{{ inventory_hostname }}/info.php
+        method: GET
+        status_code: 200
